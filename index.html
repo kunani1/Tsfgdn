@@ -48,47 +48,51 @@
 
         // Function to fetch channel data and format it
         const fetchChannelData = async () => {
-            try {
-                console.log('Fetching channel data...');
-                const response = await fetchData("https://rahuketu.rf.gd");
+    try {
+        console.log('Fetching channel data...');
+        const response = await fetchData("rahuketu.rf.gd");
 
-                const channels = response?.data || [];
-                console.log(`Channels data fetched successfully. Total channels: ${channels.length}`);
+        // Log the full response to see its structure
+        console.log('Raw response from API:', response);
 
-                return channels.map(channel => {
-                    // Create clearkey data from licence1 and licence2
-                    let clearkeyData = null;
-                    if (channel.licence1 && channel.licence2) {
-                        const base64Licence1 = hexToBase64(channel.licence1);
-                        const base64Licence2 = hexToBase64(channel.licence2);
-                        if (base64Licence1 && base64Licence2) {
-                            clearkeyData = {
-                                keys: [{
-                                    kty: "oct",
-                                    k: base64Licence2,
-                                    kid: base64Licence1
-                                }],
-                                type: "temporary"
-                            };
-                            console.log(`Clearkey data created for channel ${channel.id}: ${JSON.stringify(clearkeyData)}`);
-                        }
-                    }
+        // Check if the structure matches what we expect
+        const channels = response.data || []; // Adjust based on the actual structure
+        console.log(`Channels data fetched successfully. Total channels: ${channels.length}`);
 
-                    return {
-                        id: channel.id,
-                        name: channel.title,
-                        genre: channel.genre || null,
-                        logo: channel.logo,
-                        stream_url: channel.initialUrl,
-                        pssh: channel.psshSet || null,
-                        clearkey: clearkeyData ? JSON.stringify(clearkeyData) : null
+        return channels.map(channel => {
+            // Create clearkey data from licence1 and licence2
+            let clearkeyData = null;
+            if (channel.licence1 && channel.licence2) {
+                const base64Licence1 = hexToBase64(channel.licence1);
+                const base64Licence2 = hexToBase64(channel.licence2);
+                if (base64Licence1 && base64Licence2) {
+                    clearkeyData = {
+                        keys: [{
+                            kty: "oct",
+                            k: base64Licence2,
+                            kid: base64Licence1
+                        }],
+                        type: "temporary"
                     };
-                });
-            } catch (error) {
-                console.error('Fetch error:', error.message);
-                return [];
+                    console.log(`Clearkey data created for channel ${channel.id}: ${JSON.stringify(clearkeyData)}`);
+                }
             }
-        };
+
+            return {
+                id: channel.id,
+                name: channel.title,
+                genre: channel.genre || null,
+                logo: channel.logo,
+                stream_url: channel.initialUrl,
+                pssh: channel.psshSet || null,
+                clearkey: clearkeyData ? JSON.stringify(clearkeyData) : null
+            };
+        });
+    } catch (error) {
+        console.error('Fetch error:', error.message);
+        return [];
+    }
+};
 
         // Function to display fetched data on the webpage
         const displayChannels = async () => {
