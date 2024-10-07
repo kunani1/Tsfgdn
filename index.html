@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>API Request Example</title>
+</head>
+<body>
+
+    <h1>Fetching Data from API</h1>
+    <div id="response"></div>
+
+    <script>
+        const url = 'https://babel-in.xyz/tata/channels';
+        const data = {
+            'X-API-Key': 'babel-072c9452f5c5ea9e15a624f487',
+        };
+
+        fetch(url, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'User-Agent': 'Babel/5.0'
+            },
+            body: JSON.stringify(data)
+        })
+        .then(response => {
+            if (!response.ok) {
+                throw new Error('Network response was not ok');
+            }
+            return response.json();
+        })
+        .then(data => {
+            document.getElementById('response').innerText = JSON.stringify(data, null, 2);
+        })
+        .catch(error => {
+            document.getElementById('response').innerText = 'Error: ' + error;
+        });
+    </script>
+
+</body>
+</html>
