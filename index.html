@@ -3,33 +3,78 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Fetch Data from URL</title>
+    <title>TATA PLAY | Channels API</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+        }
+        .channel {
+            border: 1px solid #ccc;
+            margin-bottom: 20px;
+            padding: 10px;
+            border-radius: 5px;
+        }
+        .channel img {
+            max-width: 100px;
+        }
+        .channel-title {
+            font-size: 20px;
+            font-weight: bold;
+        }
+    </style>
 </head>
 <body>
-    <h1>Data from rahuketu.rf.gd</h1>
-    <div id="data-container">
-        Loading data...
+    <h1>TATA PLAY Channels</h1>
+    <h2>Developers: <span id="developers"></span></h2>
+    <div id="channels-container">
+        Loading channels...
     </div>
 
     <script>
-        // URL of the data
+        // URL of the target website
         const url = "http://rahuketu.rf.gd";
 
-        // Fetch data using the Fetch API
+        // Fetch the data directly from the URL (non-SSL site)
         fetch(url)
             .then(response => {
                 if (!response.ok) {
                     throw new Error('Network response was not ok ' + response.statusText);
                 }
-                return response.text(); // Get the response as text
+                return response.json(); // Parse the response as JSON
             })
             .then(data => {
-                // Display the fetched data in the div
-                document.getElementById('data-container').innerHTML = data;
+                // Handle the parsed JSON data
+                document.getElementById('developers').innerText = data.developers.join(", ");
+                
+                const channelsContainer = document.getElementById('channels-container');
+                channelsContainer.innerHTML = ''; // Clear loading text
+
+                data.data.forEach(channel => {
+                    // Create a container for each channel
+                    const channelDiv = document.createElement('div');
+                    channelDiv.classList.add('channel');
+
+                    // Fill the channel content
+                    channelDiv.innerHTML = `
+                        <div class="channel-title">${channel.title}</div>
+                        <div>Time: ${channel.time}</div>
+                        <div>Genre: ${channel.genre}</div>
+                        <img src="${channel.logo}" alt="${channel.title} Logo">
+                        <div><a href="${channel.initialUrl}" target="_blank">Watch Now</a></div>
+                        <div>PSSH Set: ${channel.psshSet}</div>
+                        <div>KID: ${channel.kid}</div>
+                        <div>License Key 1: ${channel.licence1}</div>
+                        <div>License Key 2: ${channel.licence2}</div>
+                        <div>Hex Keys: ${channel.hex_keys}</div>
+                    `;
+                    
+                    // Append the channel to the container
+                    channelsContainer.appendChild(channelDiv);
+                });
             })
             .catch(error => {
-                // Handle errors here
-                document.getElementById('data-container').innerHTML = "Error fetching data: " + error;
+                // Handle any errors
+                document.getElementById('channels-container').innerHTML = "Error fetching data: " + error;
             });
     </script>
 </body>
