@@ -1,15 +1,36 @@
-<?php
-// URL of the data
-$url = "https://rahuketu.rf.gd";
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Fetch Data from URL</title>
+</head>
+<body>
+    <h1>Data from rahuketu.rf.gd</h1>
+    <div id="data-container">
+        Loading data...
+    </div>
 
-// Get the data from the URL
-$response = file_get_contents($url);
+    <script>
+        // URL of the data
+        const url = "https://rahuketu.rf.gd";
 
-// Check if the request was successful
-if ($response !== false) {
-    // Output the response
-    echo $response;
-} else {
-    echo "Failed to retrieve data from the URL.";
-}
-?>
+        // Fetch data using the Fetch API
+        fetch(url)
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error('Network response was not ok ' + response.statusText);
+                }
+                return response.text(); // Get the response as text
+            })
+            .then(data => {
+                // Display the fetched data in the div
+                document.getElementById('data-container').innerHTML = data;
+            })
+            .catch(error => {
+                // Handle errors here
+                document.getElementById('data-container').innerHTML = "Error fetching data: " + error;
+            });
+    </script>
+</body>
+</html>
