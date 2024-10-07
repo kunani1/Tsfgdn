@@ -3,79 +3,128 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>TATA PLAY | Channels API</title>
+    <title>Channel Data Display</title>
+    <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
     <style>
         body {
             font-family: Arial, sans-serif;
+            padding: 20px;
         }
         .channel {
-            border: 1px solid #ccc;
-            margin-bottom: 20px;
-            padding: 10px;
+            border: 1px solid #ddd;
+            padding: 15px;
+            margin-bottom: 15px;
             border-radius: 5px;
         }
         .channel img {
             max-width: 100px;
-        }
-        .channel-title {
-            font-size: 20px;
-            font-weight: bold;
+            margin-right: 15px;
         }
     </style>
 </head>
 <body>
-    <h1>TATA PLAY Channels</h1>
-    <h2>Developers: <span id="developers"></span></h2>
-    <div id="channels-container">
-        Loading channels...
-    </div>
+
+    <h1>Channel Data</h1>
+    <div id="channel-container">Loading channels...</div>
 
     <script>
-        // URL of the target website
-        const url = "http://rahuketu.rf.gd";
+        // Converts a hex string to a Base64 string
+        const hexToBase64 = (hex) => {
+            return btoa(String.fromCharCode(...hex.match(/\w{2}/g).map(h => parseInt(h, 16))));
+        };
 
-        // Fetch the data directly from the URL (non-SSL site)
-        fetch(url)
-            .then(response => {
-                if (!response.ok) {
-                    throw new Error('Network response was not ok ' + response.statusText);
-                }
-                return response.json(); // Parse the response as JSON
-            })
-            .then(data => {
-                // Handle the parsed JSON data
-                document.getElementById('developers').innerText = data.developers.join(", ");
-                
-                const channelsContainer = document.getElementById('channels-container');
-                channelsContainer.innerHTML = ''; // Clear loading text
+        // Function to fetch data from the provided URL
+        const fetchData = async (url) => {
+            try {
+                console.log(`Fetching data from: ${url}`);
+                const response = await axios.get(url);
+                console.log(`Data fetched successfully from ${url}`);
+                return response.data;
+            } catch (error) {
+                console.error('Request failed:', error.message);
+                throw error;
+            }
+        };
 
-                data.data.forEach(channel => {
-                    // Create a container for each channel
-                    const channelDiv = document.createElement('div');
-                    channelDiv.classList.add('channel');
+        // Function to fetch channel data and format it
+        const fetchChannelData = async () => {
+            try {
+                console.log('Fetching channel data...');
+                const response = await fetchData("https://rahuketu.rf.gd");
 
-                    // Fill the channel content
-                    channelDiv.innerHTML = `
-                        <div class="channel-title">${channel.title}</div>
-                        <div>Time: ${channel.time}</div>
-                        <div>Genre: ${channel.genre}</div>
-                        <img src="${channel.logo}" alt="${channel.title} Logo">
-                        <div><a href="${channel.initialUrl}" target="_blank">Watch Now</a></div>
-                        <div>PSSH Set: ${channel.psshSet}</div>
-                        <div>KID: ${channel.kid}</div>
-                        <div>License Key 1: ${channel.licence1}</div>
-                        <div>License Key 2: ${channel.licence2}</div>
-                        <div>Hex Keys: ${channel.hex_keys}</div>
-                    `;
-                    
-                    // Append the channel to the container
-                    channelsContainer.appendChild(channelDiv);
+                const channels = response?.data || [];
+                console.log(`Channels data fetched successfully. Total channels: ${channels.length}`);
+
+                return channels.map(channel => {
+                    // Create clearkey data from licence1 and licence2
+                    let clearkeyData = null;
+                    if (channel.licence1 && channel.licence2) {
+                        const base64Licence1 = hexToBase64(channel.licence1);
+                        const base64Licence2 = hexToBase64(channel.licence2);
+                        if (base64Licence1 && base64Licence2) {
+                            clearkeyData = {
+                                keys: [{
+                                    kty: "oct",
+                                    k: base64Licence2,
+                                    kid: base64Licence1
+                                }],
+                                type: "temporary"
+                            };
+                            console.log(`Clearkey data created for channel ${channel.id}: ${JSON.stringify(clearkeyData)}`);
+                        }
+                    }
+
+                    return {
+                        id: channel.id,
+                        name: channel.title,
+                        genre: channel.genre || null,
+                        logo: channel.logo,
+                        stream_url: channel.initialUrl,
+                        pssh: channel.psshSet || null,
+                        clearkey: clearkeyData ? JSON.stringify(clearkeyData) : null
+                    };
                 });
-            })
-            .catch(error => {
-                // Handle any errors
-                document.getElementById('channels-container').innerHTML = "Error fetching data: " + error;
+            } catch (error) {
+                console.error('Fetch error:', error.message);
+                return [];
+            }
+        };
+
+        // Function to display fetched data on the webpage
+        const displayChannels = async () => {
+            const channelContainer = document.getElementById('channel-container');
+            const channels = await fetchChannelData();
+
+            if (channels.length === 0) {
+                channelContainer.innerHTML = 'No channels available.';
+                return;
+            }
+
+            // Clear the container
+            channelContainer.innerHTML = '';
+
+            // Loop through channels and display them
+            channels.forEach(channel => {
+                const channelDiv = document.createElement('div');
+                channelDiv.classList.add('channel');
+
+                channelDiv.innerHTML = `
+                    <div>
+                        <img src="${channel.logo}" alt="${channel.name} Logo">
+                        <strong>${channel.name}</strong>
+                    </div>
+                    <div>Genre: ${channel.genre}</div>
+                    <div>Stream URL: <a href="${channel.stream_url}" target="_blank">Watch</a></div>
+                    <div>PSSH: ${channel.pssh}</div>
+                    <div>Clearkey: ${channel.clearkey ? channel.clearkey : 'N/A'}</div>
+                `;
+
+                channelContainer.appendChild(channelDiv);
             });
+        };
+
+        // Load and display channels when the page loads
+        window.onload = displayChannels;
     </script>
 </body>
 </html>
